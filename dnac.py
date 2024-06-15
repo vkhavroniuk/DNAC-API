@@ -59,8 +59,10 @@ class DNAC:
             if r:
                 error = r.json()['response']
                 print(f'HTTP Error: {e}. DNAC Said: {error}')
+                exit(1)
             else:
                 print(f'HTTP Error: {e}')
+                exit(1)
         return r
 
     def post(self, url, data, params=None):
@@ -72,7 +74,7 @@ class DNAC:
     def get(self, url, params=None):
         return self.get_post_delete('GET', url, data=None, params=params)
 
-    def wait_for_task(self, task_id) -> None:
+    def wait_for_task(self, task_id) -> bool:
         """
         Receives task id and waits for execution. Reports status.
         :param task_id:
@@ -85,12 +87,27 @@ class DNAC:
             if 'endTime' in status:
                 if not status['isError']:
                     print(f'Task {task_id} completed with no errors')
+                    return True
                 else:
                     print(f'Task {task_id} completed with errors')
                     print(status)
-                break
+                    return False
             else:
                 print(f'Task {task_id} still in progress')
+                time.sleep(1)
+
+    def wait_for_status(self, status_url) -> bool:
+        while True:
+            r = self.get(status_url)
+            status = r.json()['status']
+            if status == 'SUCCESS':
+                return True
+            elif status == 'FAILURE':
+                error = r.json()['bapiError']
+                print(f'Error: {error}')
+                return False
+            else:
+                print('Operation still in progress')
                 time.sleep(1)
 
     def get_sites(self) -> dict:
@@ -121,10 +138,75 @@ class DNAC:
         r = self.get(device_url)
         return r.json()['response']
 
-    def get_anycast_gateways(self):
+    def get_all_anycast_gateways(self):
         gw_url = '/dna/intent/api/v1/sda/anycastGateways'
         r = self.get(gw_url)
         return r.json()['response']
+
+    def get_anycast_gateway(self, fabric_id: str, ippool: str) -> dict:
+        all_gateways = self.get_all_anycast_gateways()
+        for gateway in all_gateways:
+            if gateway['fabricId'] == fabric_id and gateway['ipPoolName'] == ippool:
+                return gateway
+        return {}
+
+    def add_anycast_gateway(self, site_hie: str, vn_name: str, ip_pool_name: str,
+                            vlan_name: str, vlan_id='', l2flooding=False) -> bool:
+        url = '/dna/intent/api/v1/business/sda/virtualnetwork/ippool'
+        body = {
+            "siteNameHierarchy": site_hie,
+            "virtualNetworkName": vn_name,
+            "isLayer2Only": False,
+            "ipPoolName": ip_pool_name,
+            "vlanName": vlan_name,
+            "autoGenerateVlanName": False,
+            "trafficType": "Data",
+            "scalableGroupName": "",
+            "isL2FloodingEnabled": l2flooding,
+            "isThisCriticalPool": False,
+            "isWirelessPool": False,
+            "isIpDirectedBroadcast": False,
+            "isCommonPool": False,
+            "isBridgeModeVm": False,
+            "poolType": "Extended"
+        }
+        if vlan_id:
+            body['vlanId'] = vlan_id
+        print(f'Adding Anycast GW and Subnet for pool: {ip_pool_name}')
+        r = self.post(url, data=body)
+        status_url = r.json()['executionStatusUrl']
+        return self.wait_for_status(status_url)
+
+    def add_l2segment(self, site_hie: str, vlan_name: str, vlan_id='', l2flooding=True) -> bool:
+        url = '/dna/intent/api/v1/business/sda/virtualnetwork/ippool'
+        body = {
+            "siteNameHierarchy": site_hie,
+            "isLayer2Only": True,
+            "vlanName": vlan_name,
+            "ipPoolName": vlan_name,
+            "virtualNetworkName": 'USER_VN',
+            "autoGenerateVlanName": False,
+            "trafficType": "Data",
+            "scalableGroupName": "",
+            "isL2FloodingEnabled": l2flooding,
+            "isIpDirectedBroadcast": False,
+            "isSelectiveFloodingEnabled": True,
+            "poolType": "Extended"
+        }
+        if vlan_id:
+            body['vlanId'] = vlan_id
+        print(body)
+        print(f'Adding L2 Segment for VLAN: {vlan_id} with nane {vlan_name}')
+        r = self.post(url, data=body)
+        status_url = r.json()['executionStatusUrl']
+        return self.wait_for_status(status_url)
+
+    def delete_anycast_gateway(self, site_hie: str, vn_name: str, ip_pool_name: str) -> bool:
+        url = (f'/dna/intent/api/v1/business/sda/virtualnetwork/ippool?virtualNetworkName={vn_name}&'
+               f'ipPoolName={ip_pool_name}&siteNameHierarchy={site_hie}')
+        r = self.delete_request(url, data='')
+        status_url = r.json()['executionStatusUrl']
+        return self.wait_for_status(status_url)
 
     def get_fabric_id(self, site_id: str) -> str | None:
         url = '/dna/intent/api/v1/sda/fabricSites/'
@@ -154,12 +236,56 @@ class DNAC:
         pools = r.json()['response']
         ip_pools = {}
         for pool in pools:
-            ip_pools[pool['groupName']] = pool['ipPools'][0]['ipPoolCidr']
+            ip_pools[pool['groupName']] = {'id': pool['id'], 'subnet': pool['ipPools'][0]['ipPoolCidr']}
         return ip_pools
+
+    def get_ippool_name(self, site_id: str, subnet: str) -> str:
+        subnets = self.get_site_subnets(site_id)
+        for site_subnet_name in subnets:
+            if subnets[site_subnet_name]['subnet'] == subnet:
+                return site_subnet_name
+        return ''
+
+    def get_ippool_id(self, site_id: str, subnet: str) -> str:
+        subnets = self.get_site_subnets(site_id)
+        for site_subnet_name in subnets:
+            if subnets[site_subnet_name]['subnet'] == subnet:
+                return subnets[site_subnet_name]['id']
+        return ''
 
     def is_subnet_exit(self, site_id: str, subnet: str) -> bool:
         subnets = self.get_site_subnets(site_id)
-        return True if subnet in subnets.values() else False
+        for current_subnet in subnets:
+            if subnets[current_subnet]['subnet'] == subnet:
+                return True
+        return False
+
+    def reserve_subnet(self, site_id: str, parent_subnet: str, subnet: str, gw: str,
+                       pool_name: str, dns: list, dhcp: list):
+        net_prefix = subnet.split('/')
+        prefix = net_prefix[0]
+        prefix_len = net_prefix[1]
+        url = f'/dna/intent/api/v1/reserve-ip-subpool/{site_id}'
+        body = {
+            'ipv4GlobalPool': parent_subnet,
+            'ipv4Subnet': prefix,
+            'ipv4PrefixLength': prefix_len,
+            'ipv4GateWay': gw,
+            'name': pool_name,
+            'ipv4Prefix': True,
+            'type': 'Generic',
+            'ipv4DhcpServers': dhcp,
+            'ipv4DnsServers': dns
+        }
+        r = self.post(url, data=body)
+        status_url = r.json()['executionStatusUrl']
+        return self.wait_for_status(status_url)
+
+    def release_subnet(self, subnet_id):
+        url = f'/dna/intent/api/v1/reserve-ip-subpool/{subnet_id}'
+        r = self.delete_request(url, data='')
+        status_url = r.json()['executionStatusUrl']
+        return self.wait_for_status(status_url)
 
     def get_device_id(self, mgmt_ip: str) -> str:
         url = f'/dna/intent/api/v1/network-device?managementIpAddress={mgmt_ip}'

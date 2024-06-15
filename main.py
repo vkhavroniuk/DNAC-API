@@ -1,6 +1,6 @@
 from dnac import DNAC
-import time
 import os
+import openpyxl
 
 if __name__ == '__main__':
     try:
@@ -12,7 +12,10 @@ if __name__ == '__main__':
         exit(1)
 
     dnac = DNAC(DNAC_IP, USERNAME, PASSWORD)
-    dnac.auth()
+    auth_token = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NjI2YmI1MTNhZjI2YTY0Mzk1MmZmYzEiLCJhdXRoU291cmNlIjoiZXh0ZXJuYWwiLCJ0ZW5hbnROYW1lIjoiVE5UMCIsInJvbGVzIjpbIjY1ZmNhZGI2OGM3NWUwNDAwMzY2YzdhMCJdLCJ0ZW5hbnRJZCI6IjY1ZmNhZGI1OGM3NWUwNDAwMzY2Yzc5ZSIsImV4cCI6MTcxODQ4ODYyMiwiaWF0IjoxNzE4NDg1MDIyLCJqdGkiOiJiYmVkOGViNi04ZTQ4LTQwMGYtOTk2YS1iZTMyMzIwNjc5ODUiLCJ1c2VybmFtZSI6InZvbG9keW15cmsxIn0.WMgLWoQJ9j5_hs3n7rAo507W0_ZjNAQAOjPLknWA17lOwCHWLWaZ99LHL-l0yz1pLwdqBtMjfQsPdJAgePjZveXm8CD3a6lscRdl8mpWBmg9kRwJfPaRmrjYfRpPjZgOdWbcZlmk_bJ6x49VLc8BiEIDXHeF28UOtB5BL2NEmbSnfmKaqkCVJHb49Q2LipRw1hjU_frNH0fynIqaUyRTjKi9LoQQS6dkt8GJNNE9r4FRHcBN9KZQnkKtcUQ1-hfr1uu3q5TcpiUAepS1OFzfZdMPSCKqGtTMi6GrJvORQJSQC52-h13AI6EwYPU7D_2gBwba4GfrHnEs_3fcAxqAUw"
+    dnac.session.headers.update({'X-Auth-Token': auth_token,
+                                 'Content-Type': 'application/json', 'Accept': 'application/json'})
+#    dnac.auth()
 
     # working with:
     # fabric_site_name = '' # SDA Fabric Site Name. String.
@@ -42,26 +45,135 @@ if __name__ == '__main__':
 
     # get fabric ID using site ID
     my_site_id = dnac_sites[fabric_site_name]['id']
+    my_site_hie = dnac_sites[fabric_site_name]['groupNameHierarchy']
     my_fabric_id = dnac.get_fabric_id(my_site_id)
 
     # get device ID for B535 SW:
     my_switch_id = dnac.get_device_id(my_switch_ip)
 
     # remove if assigned. One by one. Each task should be completed before submitting new one.
-    for port in ports:
-        interface_name = port['interfaceName']
-        if dnac.is_port_assigned(my_switch_ip, interface_name):
-            ret = dnac.delete_port_assignment(my_fabric_id, my_switch_id, interface_name)
-            taskId = ret['taskId']
-            print(f'Port Deletion task {taskId} was submitted. Waiting for execution')
-            dnac.wait_for_task(taskId)
+    # for port in ports:
+    #    interface_name = port['interfaceName']
+    #    if dnac.is_port_assigned(my_switch_ip, interface_name):
+    #        ret = dnac.delete_port_assignment(my_fabric_id, my_switch_id, interface_name)
+    #        taskId = ret['taskId']
+    #        print(f'Port Deletion task {taskId} was submitted. Waiting for execution')
+    #        dnac.wait_for_task(taskId)
 
     # wait two minutes, to test id, I want to go to DNAC and SW and see that ports were removed
-    print('wait 120 seconds')
-    time.sleep(120)
+    # print('wait 120 seconds')
+    # time.sleep(120)
 
     # add ports. Bulk operations. Single Task.
-    ret = dnac.assign_ports(my_fabric_id, my_switch_id, ports)
-    taskId = ret['taskId']
-    print(f'Port assignment task {taskId} was submitted. Waiting for execution')
-    dnac.wait_for_task(taskId)
+    # ret = dnac.assign_ports(my_fabric_id, my_switch_id, ports)
+    # taskId = ret['taskId']
+    # print(f'Port assignment task {taskId} was submitted. Waiting for execution')
+    # dnac.wait_for_task(taskId)
+
+    # Add test AnycastGateway for 10.6.23.0/25 (10.6.23.1)
+    add_subnet = '10.60.100.0/24'
+    add_subnet_gw = '10.60.100.1'
+
+    ip_pool_name = '10.60.100.0_24'
+    VN_ID = 'IOT_VN'
+    VLAN_NAME = 'IOT_TEST'
+    VLAN_ID = '987'
+    DHCP = ['10.6.14.10', '10.16.171.10']
+    DNS = ['10.6.14.10', '10.5.14.10']
+
+
+    #delete test
+    #if dnac.get_anycast_gateway(my_fabric_id, ip_pool_name):
+    #   dnac.delete_anycast_gateway(my_site_hie, VN_ID, ip_pool_name)
+    #
+
+    # if subnet does not exist, create new. If exists, get name, id and delete.
+    #if not dnac.is_subnet_exit(my_site_id, add_subnet):
+    #    parent_subnet = dnac.get_subnet_global_parent(add_subnet)
+    #    if not parent_subnet:
+    #        print(f'Error: {add_subnet} does not have parent Global Subnet. Please fix and try again')
+    #    else:
+    #        print(f'Reserving pool: {add_subnet}')
+    #        dnac.reserve_subnet(my_site_id, parent_subnet, add_subnet, add_subnet_gw, ip_pool_name, DNS, DHCP)
+    #else:
+    #    ip_pool_name = dnac.get_ippool_name(my_site_id, add_subnet)
+    #    ip_pool_id = dnac.get_ippool_id(my_site_id, add_subnet)
+    #    print(f'{ip_pool_name} with ID:{ip_pool_id} exists. Removing' )
+    #    dnac.release_subnet(ip_pool_id)
+
+
+    # if Anycast GW does not exit, create new.
+    #if not dnac.get_anycast_gateway(my_fabric_id, ip_pool_name):
+    #    dnac.add_anycast_gateway(my_site_hie, VN_ID, ip_pool_name, VLAN_NAME, VLAN_ID)
+    #    pool = dnac.get_anycast_gateway(my_fabric_id, ip_pool_name)
+    # else:
+        ## N/A dnac.update_anycast_gateway(my_site_hie, VN_ID, ip_pool_name, VLAN_NAME)
+        # pass
+
+
+#### Sat Jun 15
+
+    # read xcel
+    wb_obj = openpyxl.load_workbook('./b535_anycast_gw_and_l2.xlsx')
+    sheet_obj = wb_obj['AnycastGateways']
+
+    max_row = sheet_obj.max_row
+    anycast_gw_list = []
+
+    for row in range(2, max_row + 1):
+        anycast_gw = {}
+        anycast_gw['vlan_id'] = sheet_obj.cell(row=row, column=1).value
+        segment_type = sheet_obj.cell(row=row, column=2).value
+        anycast_gw['vlan_name'] = sheet_obj.cell(row=row, column=3).value
+        anycast_gw['segment_type'] = segment_type
+        if segment_type == 'Layer3':
+            anycast_gw['subnet'] = sheet_obj.cell(row=row, column=5).value + sheet_obj.cell(row=row, column=6).value
+            anycast_gw['gateway_ip'] = sheet_obj.cell(row=row, column=7).value
+            anycast_gw['vn_name'] = sheet_obj.cell(row=row, column=8).value
+            anycast_gw['pool_name'] = sheet_obj.cell(row=row, column=4).value
+        else:
+            anycast_gw['pool_name'] = sheet_obj.cell(row=row, column=3).value
+            anycast_gw['vn_name'] = 'USER_VN'
+        anycast_gw_list.append(anycast_gw)
+
+#    print(anycast_gw_list)
+
+    for gw in anycast_gw_list:
+        VN_ID = gw['vn_name']
+        ip_pool_name = gw['pool_name']
+        VLAN_NAME = gw['vlan_name']
+        VLAN_ID = gw['vlan_id']
+        if gw['segment_type'] == 'Layer3':
+            add_subnet = gw['subnet']
+            add_subnet_gw = gw['gateway_ip']
+        else:
+            add_subnet = ''
+            add_subnet_gw = ''
+        #print(VLAN_ID, VLAN_NAME, ip_pool_name, VN_ID, add_subnet, add_subnet_gw)
+
+    #exit(1)
+        # reserve L3 pools
+        if gw['segment_type'] == 'Layer3':
+            if not dnac.is_subnet_exit(my_site_id, add_subnet):
+                parent_subnet = dnac.get_subnet_global_parent(add_subnet)
+                if not parent_subnet:
+                    print(f'Error: {add_subnet} does not have parent Global Subnet. Please fix and try again')
+                else:
+                    print(f'Reserving pool: {add_subnet}')
+                    dnac.reserve_subnet(my_site_id, parent_subnet, add_subnet, add_subnet_gw, ip_pool_name, DNS, DHCP)
+            else:
+                ip_pool_id = 'N/A'
+                # ip_pool_name = dnac.get_ippool_name(my_site_id, add_subnet)
+                # ip_pool_id = dnac.get_ippool_id(my_site_id, add_subnet)
+                print(f'{ip_pool_name} for subnet {add_subnet} exists with ID:{ip_pool_id}' )
+
+        # if Anycast GW does not exit, create new.
+        #if not dnac.get_anycast_gateway(my_fabric_id, ip_pool_name):
+        #    dnac.add_anycast_gateway(my_site_hie, VN_ID, ip_pool_name, VLAN_NAME, VLAN_ID)
+
+
+        # delete GW if rollback is required.
+        # if dnac.get_anycast_gateway(my_fabric_id, ip_pool_name):
+        #    pool = dnac.get_anycast_gateway(my_fabric_id, ip_pool_name)
+
+

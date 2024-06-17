@@ -59,6 +59,7 @@ class DNAC:
             if r:
                 error = r.json()['response']
                 print(f'HTTP Error: {e}. DNAC Said: {error}')
+                # print(r.json())
                 exit(1)
             else:
                 print(f'HTTP Error: {e}')
@@ -195,7 +196,6 @@ class DNAC:
         }
         if vlan_id:
             body['vlanId'] = vlan_id
-        print(body)
         print(f'Adding L2 Segment for VLAN: {vlan_id} with nane {vlan_name}')
         r = self.post(url, data=body)
         status_url = r.json()['executionStatusUrl']

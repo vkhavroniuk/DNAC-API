@@ -12,7 +12,7 @@ if __name__ == '__main__':
         exit(1)
 
     dnac = DNAC(DNAC_IP, USERNAME, PASSWORD)
-    auth_token = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NjI2YmI1MTNhZjI2YTY0Mzk1MmZmYzEiLCJhdXRoU291cmNlIjoiZXh0ZXJuYWwiLCJ0ZW5hbnROYW1lIjoiVE5UMCIsInJvbGVzIjpbIjY1ZmNhZGI2OGM3NWUwNDAwMzY2YzdhMCJdLCJ0ZW5hbnRJZCI6IjY1ZmNhZGI1OGM3NWUwNDAwMzY2Yzc5ZSIsImV4cCI6MTcxODQ4ODYyMiwiaWF0IjoxNzE4NDg1MDIyLCJqdGkiOiJiYmVkOGViNi04ZTQ4LTQwMGYtOTk2YS1iZTMyMzIwNjc5ODUiLCJ1c2VybmFtZSI6InZvbG9keW15cmsxIn0.WMgLWoQJ9j5_hs3n7rAo507W0_ZjNAQAOjPLknWA17lOwCHWLWaZ99LHL-l0yz1pLwdqBtMjfQsPdJAgePjZveXm8CD3a6lscRdl8mpWBmg9kRwJfPaRmrjYfRpPjZgOdWbcZlmk_bJ6x49VLc8BiEIDXHeF28UOtB5BL2NEmbSnfmKaqkCVJHb49Q2LipRw1hjU_frNH0fynIqaUyRTjKi9LoQQS6dkt8GJNNE9r4FRHcBN9KZQnkKtcUQ1-hfr1uu3q5TcpiUAepS1OFzfZdMPSCKqGtTMi6GrJvORQJSQC52-h13AI6EwYPU7D_2gBwba4GfrHnEs_3fcAxqAUw"
+    auth_token = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NjI2YmI1MTNhZjI2YTY0Mzk1MmZmYzEiLCJhdXRoU291cmNlIjoiZXh0ZXJuYWwiLCJ0ZW5hbnROYW1lIjoiVE5UMCIsInJvbGVzIjpbIjY1ZmNhZGI2OGM3NWUwNDAwMzY2YzdhMCJdLCJ0ZW5hbnRJZCI6IjY1ZmNhZGI1OGM3NWUwNDAwMzY2Yzc5ZSIsImV4cCI6MTcxODUyNjI1MCwiaWF0IjoxNzE4NTIyNjUwLCJqdGkiOiJkOTUwNGI1Mi0yYzBmLTQwODctOTEzZS0zMTMyY2FjYTBlZmMiLCJ1c2VybmFtZSI6InZvbG9keW15cmsxIn0.nIOuWYLJMjMQ8cLtODtxluY_FVGMZTaNK6PHniRAH0ReJ4cztJXRwxQFv2rJahAQMho4OHgiq5Qv0K_8aSdyFlr82QrxEMZQpnLWS8w0VphwB9HdIQAFdjOhaASwyJSJenfSOj5-fXDGH-YGfTuR762y2ZlHP-R3rQtoD0-HaKEYJyZQJluYH1OAl0DHz_bsxIuHrMGQonWJdMXER2iXYy1MLIyKH4Or9N5Z3FUGEPGAZUtrnFEf9ag21KO62FNlRkpCdMI4wWyS8EYFy9jNnl_KTbD_wf7de3NUwnpUHMxAv4RUfw4LnZlU0-7Ogb_PZX1wUTV9bEOWaAm8TTBzjQ"
     dnac.session.headers.update({'X-Auth-Token': auth_token,
                                  'Content-Type': 'application/json', 'Accept': 'application/json'})
 #    dnac.auth()
@@ -114,7 +114,7 @@ if __name__ == '__main__':
 #### Sat Jun 15
 
     # read xcel
-    wb_obj = openpyxl.load_workbook('./b535_anycast_gw_and_l2.xlsx')
+    wb_obj = openpyxl.load_workbook('./all_b535_anycast_gw_and_l2.xlsx')
     sheet_obj = wb_obj['AnycastGateways']
 
     max_row = sheet_obj.max_row
@@ -141,15 +141,16 @@ if __name__ == '__main__':
     for gw in anycast_gw_list:
         VN_ID = gw['vn_name']
         ip_pool_name = gw['pool_name']
-        VLAN_NAME = gw['vlan_name']
-        VLAN_ID = gw['vlan_id']
+        VLAN_NAME = gw['vlan_name'][0:32]
+        VLAN_ID = str(gw['vlan_id'])
         if gw['segment_type'] == 'Layer3':
             add_subnet = gw['subnet']
             add_subnet_gw = gw['gateway_ip']
         else:
             add_subnet = ''
             add_subnet_gw = ''
-        #print(VLAN_ID, VLAN_NAME, ip_pool_name, VN_ID, add_subnet, add_subnet_gw)
+        # print(VLAN_ID, VLAN_NAME, ip_pool_name, VN_ID, add_subnet, add_subnet_gw)
+
 
     #exit(1)
         # reserve L3 pools
@@ -163,17 +164,22 @@ if __name__ == '__main__':
                     dnac.reserve_subnet(my_site_id, parent_subnet, add_subnet, add_subnet_gw, ip_pool_name, DNS, DHCP)
             else:
                 ip_pool_id = 'N/A'
-                # ip_pool_name = dnac.get_ippool_name(my_site_id, add_subnet)
-                # ip_pool_id = dnac.get_ippool_id(my_site_id, add_subnet)
+                ip_pool_name = dnac.get_ippool_name(my_site_id, add_subnet)
+                #ip_pool_id = dnac.get_ippool_id(my_site_id, add_subnet)
                 print(f'{ip_pool_name} for subnet {add_subnet} exists with ID:{ip_pool_id}' )
 
-        # if Anycast GW does not exit, create new.
-        #if not dnac.get_anycast_gateway(my_fabric_id, ip_pool_name):
-        #    dnac.add_anycast_gateway(my_site_hie, VN_ID, ip_pool_name, VLAN_NAME, VLAN_ID)
+            # if Anycast GW does not exit, create new.
+            if not dnac.get_anycast_gateway(my_fabric_id, ip_pool_name):
+                dnac.add_anycast_gateway(my_site_hie, VN_ID, ip_pool_name, VLAN_NAME, VLAN_ID)
+
+            # delete GW if rollback is required.
+            # if dnac.get_anycast_gateway(my_fabric_id, ip_pool_name):
+            #    pool = dnac.get_anycast_gateway(my_fabric_id, ip_pool_name)
+
+        #if gw['segment_type'] == 'Layer2':
+        #    dnac.add_l2segment(my_site_hie, VLAN_NAME, VLAN_ID)
 
 
-        # delete GW if rollback is required.
-        # if dnac.get_anycast_gateway(my_fabric_id, ip_pool_name):
-        #    pool = dnac.get_anycast_gateway(my_fabric_id, ip_pool_name)
-
-
+## ToDo: truncate VLAN name inside of add anycast gw and add l2 segment.
+## ToDo: add logger to debug.
+## ToDo: add 429 Error handling.

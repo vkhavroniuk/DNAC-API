@@ -3,6 +3,7 @@ import os
 import openpyxl
 
 if __name__ == '__main__':
+
     try:
         USERNAME = os.environ['DNAC_USERNAME']
         PASSWORD = os.environ['DNAC_PASSWORD']
@@ -12,7 +13,7 @@ if __name__ == '__main__':
         exit(1)
 
     dnac = DNAC(DNAC_IP, USERNAME, PASSWORD)
-    auth_token = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NjI2YmI1MTNhZjI2YTY0Mzk1MmZmYzEiLCJhdXRoU291cmNlIjoiZXh0ZXJuYWwiLCJ0ZW5hbnROYW1lIjoiVE5UMCIsInJvbGVzIjpbIjY1ZmNhZGI2OGM3NWUwNDAwMzY2YzdhMCJdLCJ0ZW5hbnRJZCI6IjY1ZmNhZGI1OGM3NWUwNDAwMzY2Yzc5ZSIsImV4cCI6MTcxODUyNjI1MCwiaWF0IjoxNzE4NTIyNjUwLCJqdGkiOiJkOTUwNGI1Mi0yYzBmLTQwODctOTEzZS0zMTMyY2FjYTBlZmMiLCJ1c2VybmFtZSI6InZvbG9keW15cmsxIn0.nIOuWYLJMjMQ8cLtODtxluY_FVGMZTaNK6PHniRAH0ReJ4cztJXRwxQFv2rJahAQMho4OHgiq5Qv0K_8aSdyFlr82QrxEMZQpnLWS8w0VphwB9HdIQAFdjOhaASwyJSJenfSOj5-fXDGH-YGfTuR762y2ZlHP-R3rQtoD0-HaKEYJyZQJluYH1OAl0DHz_bsxIuHrMGQonWJdMXER2iXYy1MLIyKH4Or9N5Z3FUGEPGAZUtrnFEf9ag21KO62FNlRkpCdMI4wWyS8EYFy9jNnl_KTbD_wf7de3NUwnpUHMxAv4RUfw4LnZlU0-7Ogb_PZX1wUTV9bEOWaAm8TTBzjQ"
+    auth_token = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NjI2YmI1MTNhZjI2YTY0Mzk1MmZmYzEiLCJhdXRoU291cmNlIjoiZXh0ZXJuYWwiLCJ0ZW5hbnROYW1lIjoiVE5UMCIsInJvbGVzIjpbIjY1ZmNhZGI2OGM3NWUwNDAwMzY2YzdhMCJdLCJ0ZW5hbnRJZCI6IjY1ZmNhZGI1OGM3NWUwNDAwMzY2Yzc5ZSIsImV4cCI6MTcxODkwOTIyOCwiaWF0IjoxNzE4OTA1NjI4LCJqdGkiOiIxOTdkZTE2Zi00OGM1LTQxODUtOTExOS1hOGFkYzA5NGFmNTAiLCJ1c2VybmFtZSI6InZvbG9keW15cmsxIn0.WsB1XNDDZfSPhtAY8sYjdnWdr-QxlRxQCtYjeR2K9RyqEPIIWI-Yb1j9I4C9PC5V0GW9enst6fui4xWc-iy9LzuIt5ASSwQt6gM-cSYr-LELrDyQPL-WU1PxuUz69-xg0I2XgybfFtriNfKfJviJ-osmgnR5cUitBQNcNTLuzH1gTt73s4xrBN3dcL5832EVhkxcgIWBB9X16_oIPykqfn1wgbUojoRRxBjapEfmZwVDKhxCfxhS3liTN0i9LcxXXyTD9R3JHRjdpZ825wVEpZyMu2byTz0YUTj9P0bhs4oEKvRJn-IMFDbAd_SG_SgNCir9wLE-EMpzPBGyNqIn2Q"
     dnac.session.headers.update({'X-Auth-Token': auth_token,
                                  'Content-Type': 'application/json', 'Accept': 'application/json'})
 #    dnac.auth()
@@ -70,6 +71,7 @@ if __name__ == '__main__':
     # print(f'Port assignment task {taskId} was submitted. Waiting for execution')
     # dnac.wait_for_task(taskId)
 
+
     # Add test AnycastGateway for 10.6.23.0/25 (10.6.23.1)
     add_subnet = '10.60.100.0/24'
     add_subnet_gw = '10.60.100.1'
@@ -78,7 +80,7 @@ if __name__ == '__main__':
     VN_ID = 'IOT_VN'
     VLAN_NAME = 'IOT_TEST'
     VLAN_ID = '987'
-    DHCP = ['10.6.14.10', '10.16.171.10']
+    DHCP = ['10.6.14.10', '10.2.14.10']
     DNS = ['10.6.14.10', '10.5.14.10']
 
 
@@ -114,7 +116,7 @@ if __name__ == '__main__':
 #### Sat Jun 15
 
     # read xcel
-    wb_obj = openpyxl.load_workbook('./all_b535_anycast_gw_and_l2.xlsx')
+    wb_obj = openpyxl.load_workbook('./awarepoints.xlsx')
     sheet_obj = wb_obj['AnycastGateways']
 
     max_row = sheet_obj.max_row
@@ -122,6 +124,8 @@ if __name__ == '__main__':
 
     for row in range(2, max_row + 1):
         anycast_gw = {}
+        if not sheet_obj.cell(row=row, column=1).value and not sheet_obj.cell(row=row, column=3).value:
+            continue
         anycast_gw['vlan_id'] = sheet_obj.cell(row=row, column=1).value
         segment_type = sheet_obj.cell(row=row, column=2).value
         anycast_gw['vlan_name'] = sheet_obj.cell(row=row, column=3).value

@@ -3,6 +3,7 @@ from ipaddress import ip_network
 import requests
 import time
 import urllib3
+import re
 urllib3.disable_warnings()
 
 
@@ -344,4 +345,15 @@ class DNAC:
             new_port_json['voiceVlanName'] = new_port['voiceVlanName']
             ports_to_configure.append(new_port_json)
         r = self.post(assign_url, data=ports_to_configure)
+        return r.json()['response']
+
+    def get_endpoint_info(self, mac_address):
+        if not re.match("[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", mac_address.lower()):
+            raise ValueError(f'Wrong MAC Address {mac_address}')
+        url = f'/dna/intent/api/v1/client-enrichment-details/'
+        self.session.headers.update({'entity_type': 'mac_address',
+                                     'entity_value': mac_address,
+                                     'Content-Type': 'application/json',
+                                     'Accept': 'application/json'})
+        r = self.get(url)
         return r.json()['response']

@@ -18,7 +18,6 @@ if __name__ == '__main__':
                                  'Content-Type': 'application/json', 'Accept': 'application/json'})
 #    dnac.auth()
 
-
     # working with:
     # fabric_site_name = '' # SDA Fabric Site Name. String.
     # my_switch_ip = '' # Switch IP Address.
@@ -72,7 +71,6 @@ if __name__ == '__main__':
     # print(f'Port assignment task {taskId} was submitted. Waiting for execution')
     # dnac.wait_for_task(taskId)
 
-
     # Add test AnycastGateway for 10.6.23.0/25 (10.6.23.1)
     add_subnet = '10.60.100.0/24'
     add_subnet_gw = '10.60.100.1'
@@ -83,7 +81,6 @@ if __name__ == '__main__':
     VLAN_ID = '987'
     DHCP = ['10.6.14.10', '10.2.14.10']
     DNS = ['10.6.14.10', '10.2.14.10']
-
 
     #delete test
     #if dnac.get_anycast_gateway(my_fabric_id, ip_pool_name):
@@ -103,7 +100,6 @@ if __name__ == '__main__':
     #    ip_pool_id = dnac.get_ippool_id(my_site_id, add_subnet)
     #    print(f'{ip_pool_name} with ID:{ip_pool_id} exists. Removing' )
     #    dnac.release_subnet(ip_pool_id)
-
 
     # if Anycast GW does not exit, create new.
     #if not dnac.get_anycast_gateway(my_fabric_id, ip_pool_name):
@@ -156,7 +152,6 @@ if __name__ == '__main__':
             add_subnet_gw = ''
         # print(VLAN_ID, VLAN_NAME, ip_pool_name, VN_ID, add_subnet, add_subnet_gw)
 
-
     #exit(1)
         # reserve L3 pools
         if gw['segment_type'] == 'Layer3':
@@ -171,7 +166,7 @@ if __name__ == '__main__':
                 ip_pool_id = 'N/A'
                 ip_pool_name = dnac.get_ippool_name(my_site_id, add_subnet)
                 #ip_pool_id = dnac.get_ippool_id(my_site_id, add_subnet)
-                print(f'{ip_pool_name} for subnet {add_subnet} exists with ID:{ip_pool_id}' )
+                print(f'{ip_pool_name} for subnet {add_subnet} exists with ID:{ip_pool_id}')
 
             # if Anycast GW does not exit, create new.
             if not dnac.get_anycast_gateway(my_fabric_id, ip_pool_name):

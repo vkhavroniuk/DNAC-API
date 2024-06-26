@@ -1,6 +1,6 @@
 from __future__ import annotations
 from ipaddress import ip_network
-from .logger import logger
+from logger import logger
 import requests
 import time
 import urllib3

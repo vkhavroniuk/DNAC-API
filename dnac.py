@@ -356,4 +356,4 @@ class DNAC:
                                      'Content-Type': 'application/json',
                                      'Accept': 'application/json'})
         r = self.get(url)
-        return r.json()['response']
+        return r.json()

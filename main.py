@@ -13,10 +13,11 @@ if __name__ == '__main__':
         exit(1)
 
     dnac = DNAC(DNAC_IP, USERNAME, PASSWORD)
-    auth_token = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NjI2YmI1MTNhZjI2YTY0Mzk1MmZmYzEiLCJhdXRoU291cmNlIjoiZXh0ZXJuYWwiLCJ0ZW5hbnROYW1lIjoiVE5UMCIsInJvbGVzIjpbIjY1ZmNhZGI2OGM3NWUwNDAwMzY2YzdhMCJdLCJ0ZW5hbnRJZCI6IjY1ZmNhZGI1OGM3NWUwNDAwMzY2Yzc5ZSIsImV4cCI6MTcxODkwOTIyOCwiaWF0IjoxNzE4OTA1NjI4LCJqdGkiOiIxOTdkZTE2Zi00OGM1LTQxODUtOTExOS1hOGFkYzA5NGFmNTAiLCJ1c2VybmFtZSI6InZvbG9keW15cmsxIn0.WsB1XNDDZfSPhtAY8sYjdnWdr-QxlRxQCtYjeR2K9RyqEPIIWI-Yb1j9I4C9PC5V0GW9enst6fui4xWc-iy9LzuIt5ASSwQt6gM-cSYr-LELrDyQPL-WU1PxuUz69-xg0I2XgybfFtriNfKfJviJ-osmgnR5cUitBQNcNTLuzH1gTt73s4xrBN3dcL5832EVhkxcgIWBB9X16_oIPykqfn1wgbUojoRRxBjapEfmZwVDKhxCfxhS3liTN0i9LcxXXyTD9R3JHRjdpZ825wVEpZyMu2byTz0YUTj9P0bhs4oEKvRJn-IMFDbAd_SG_SgNCir9wLE-EMpzPBGyNqIn2Q"
+    auth_token = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NjI2YmI1MTNhZjI2YTY0Mzk1MmZmYzEiLCJhdXRoU291cmNlIjoiZXh0ZXJuYWwiLCJ0ZW5hbnROYW1lIjoiVE5UMCIsInJvbGVzIjpbIjY1ZmNhZGI2OGM3NWUwNDAwMzY2YzdhMCJdLCJ0ZW5hbnRJZCI6IjY1ZmNhZGI1OGM3NWUwNDAwMzY2Yzc5ZSIsImV4cCI6MTcxOTE1NjIxMSwiaWF0IjoxNzE5MTUyNjExLCJqdGkiOiJkYmM4NmYxNy02MzllLTQwOWEtOWI0YS1lNmNhNmNiMDhkYzIiLCJ1c2VybmFtZSI6InZvbG9keW15cmsxIn0.XuYFP2NeXgsAXtRkqbMTJhexIDAUoWKFMc_Ea70VifzulIC68i2qC_PZmEIo0JHrY6uYm6AKYEFNzTgKIwsLd9Ppsp7k6VxnX1hPPkNccH1-L7HuzzWVAtLF6FiYgzccec8e_rT76AKFMXgNHlGzZfe3oDmehdvFcPzjq3105LeTldnD2rDSlNiX6-lSWaNCHr3X7Uc36Mv7dW0_U3UlEdrhAW8Ar2bn3ewlDwpDCkaaTrSDbuO3uZtsTHshwTN2kkv8egvyBQBt83OGWa3Wpvr1_P6SG1ll56pV7pTwuREsdeFR2FRNNfrKtiCrxHNBYgQR2eguWH_f5Rb9B0KYjA"
     dnac.session.headers.update({'X-Auth-Token': auth_token,
                                  'Content-Type': 'application/json', 'Accept': 'application/json'})
 #    dnac.auth()
+
 
     # working with:
     # fabric_site_name = '' # SDA Fabric Site Name. String.
@@ -81,7 +82,7 @@ if __name__ == '__main__':
     VLAN_NAME = 'IOT_TEST'
     VLAN_ID = '987'
     DHCP = ['10.6.14.10', '10.2.14.10']
-    DNS = ['10.6.14.10', '10.5.14.10']
+    DNS = ['10.6.14.10', '10.2.14.10']
 
 
     #delete test

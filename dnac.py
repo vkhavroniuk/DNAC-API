@@ -1,5 +1,6 @@
 from __future__ import annotations
 from ipaddress import ip_network
+from .logger import logger
 import requests
 import time
 import urllib3
@@ -21,6 +22,7 @@ class DNAC:
         self.session.auth = (self.username, self.password)
         r = None
         try:
+            logger.debug(f'GET API request. URL: {self.base_url + auth_url}')
             r = self.session.post(self.base_url + auth_url, verify=False)
             if r.ok:
                 token = r.json()['Token']
@@ -28,14 +30,14 @@ class DNAC:
                                              'Content-Type': 'application/json', 'Accept': 'application/json'})
             r.raise_for_status()
         except requests.ConnectionError as e:
-            print('Connection Failed. Error:', e)
+            logger.error('Connection Failed. Error:', e)
             exit(1)
         except requests.exceptions.HTTPError as e:
             if r:
                 error = r.json()['response']
-                print(f'HTTP Error: {e}. DNAC Said: {error}')
+                logger.error(f'HTTP Error: {e}. DNAC Said: {error}')
             else:
-                print(f'HTTP Error: {e}')
+                logger.error(f'HTTP Error: {e}')
             exit(1)
 
     def get_post_delete(self, action, url, data=None, params=None):
@@ -47,24 +49,27 @@ class DNAC:
         try:
             if action == 'POST':
                 r = self.session.post(self.base_url + url, json=data, params=params, verify=False)
+                logger.debug(f'HTTP POST. URL: {self.base_url + url}. Data: {data}')
             elif action == 'DELETE':
                 r = self.session.delete(self.base_url + url, json=data, params=params, verify=False)
+                logger.debug(f'HTTP DELETE. URL: {self.base_url + url}. Data: {data}')
             elif action == 'GET':
                 r = self.session.get(self.base_url + url, params=params, verify=False)
+                logger.debug(f'HTTP GET. URL: {self.base_url + url}.')
             if not r.ok:
                 r.raise_for_status()
-        except requests.ConnectionError:
-            print('Connection Failed')
+                logger.debug(f'HTTP Answer: {r.json()}')
+        except requests.ConnectionError as e:
+            logger.error('Connection Failed. Error:', e)
             exit(1)
         except requests.exceptions.HTTPError as e:
             if r:
                 error = r.json()['response']
-                print(f'HTTP Error: {e}. DNAC Said: {error}')
-                # print(r.json())
-                exit(1)
+                logger.error(f'HTTP Error: {e}. DNAC Said: {error}')
             else:
-                print(f'HTTP Error: {e}')
-                exit(1)
+                logger.error(f'HTTP Error: {e}')
+            exit(1)
+        logger.debug(f'HTTP Answer: {r.json()}')
         return r
 
     def post(self, url, data, params=None):
@@ -160,7 +165,7 @@ class DNAC:
             "virtualNetworkName": vn_name,
             "isLayer2Only": False,
             "ipPoolName": ip_pool_name,
-            "vlanName": vlan_name,
+            "vlanName": vlan_name[0:32],
             "autoGenerateVlanName": False,
             "trafficType": "Data",
             "scalableGroupName": "",

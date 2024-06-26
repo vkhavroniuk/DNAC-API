@@ -185,6 +185,4 @@ if __name__ == '__main__':
         #    dnac.add_l2segment(my_site_hie, VLAN_NAME, VLAN_ID)
 
 
-## ToDo: truncate VLAN name inside of add anycast gw and add l2 segment.
-## ToDo: add logger to debug.
 ## ToDo: add 429 Error handling.
